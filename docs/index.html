@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Architects & Institutions Contact Manager</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIINfBI87S05pDINd0QkGqWMSMyjT+oEnNY="
+        crossorigin=""/>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f9;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .form-container, .map-container, .contacts-list-container {
+            padding: 20px;
+            flex-grow: 1;
+            min-width: 300px;
+        }
+        .form-container {
+            border-right: 1px solid #e0e0e0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="tel"], input[type="email"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #map {
+            height: 600px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .contacts-list-container {
+            display: none; /* Hide initially, can be revealed by search */
+        }
+        #contacts-list {
+            list-style: none;
+            padding: 0;
+        }
+        .contact-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .contact-card h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .contact-card p {
+            margin: 5px 0;
+        }
+        #search-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .placeholder-button {
+            background-color: #28a745;
+            margin-top: 10px;
+        }
+        .placeholder-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Indian Architects & Institutions</h1>
+    <div class="main-content">
+        <div class="form-container">
+            <h2>Add New Contact</h2>
+            <form id="contact-form">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-number">Contact Number</label>
+                    <input type="tel" id="contact-number">
+                </div>
+                <div class="form-group">
+                    <label for="email">E mail</label>
+                    <input type="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label for="institution">Name of the institution / office</label>
+                    <input type="text" id="institution">
+                </div>
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <select id="position">
+                        <option value="">Select Position</option>
+                        <option value="Principal or Dean">Principal or Dean</option>
+                        <option value="Prof">Prof</option>
+                        <option value="Asst">Asst</option>
+                        <option value="Principal Architect">Principal Architect</option>
+                        <option value="Junior Architect">Junior Architect</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category">
+                        <option value="">Select Category</option>
+                        <option value="Architect">Architect</option>
+                        <option value="Institution">Institution</option>
+                        <option value="Architecture office">Architecture office</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <select id="state" required>
+                        <option value="">Select State</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <select id="city" required>
+                        <option value="">Select City</option>
+                    </select>
+                </div>
+                <button type="submit">Add Contact</button>
+            </form>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+    
+    <div class="contacts-list-container">
+        <h2>Search Contacts</h2>
+        <input type="text" id="search-input" placeholder="Search by name, city, institution, etc.">
+        <ul id="contacts-list">
+            </ul>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-2009Kx14L/f71Q/Gj7wL3yV83Fv2h/f/qK7h3l8w2M4="
+        crossorigin=""></script>
+<script>
+    // Mock data for Indian states and major cities with coordinates
+    const INDIA_DATA = {
+        "Andaman and Nicobar Islands": {
+            "cities": ["Port Blair"],
+            "latlng": [11.6234, 92.7265]
+        },
+        "Andhra Pradesh": {
+            "cities": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool"],
+            "latlng": [15.9129, 79.7400]
+        },
+        "Arunachal Pradesh": {
+            "cities": ["Itanagar"],
+            "latlng": [28.2163, 94.7278]
+        },
+        "Assam": {
+            "cities": ["Guwahati", "Silchar", "Dibrugarh"],
+            "latlng": [26.2006, 92.9376]
+        },
+        "Bihar": {
+            "cities": ["Patna", "Gaya", "Muzaffarpur"],
+            "latlng": [25.0961, 85.3131]
+        },
+        "Chandigarh": {
+            "cities": ["Chandigarh"],
+            "latlng": [30.7333, 76.7794]
+        },
+        "Chhattisgarh": {
+            "cities": ["Raipur", "Bhilai", "Bilaspur"],
+            "latlng": [21.2787, 81.8661]
+        },
+        "Dadra and Nagar Haveli and Daman and Diu": {
+            "cities": ["Daman"],
+            "latlng": [20.4172, 72.8427]
+        },
+        "Delhi": {
+            "cities": ["Delhi", "New Delhi"],
+            "latlng": [28.7041, 77.1025]
+        },
+        "Goa": {
+            "cities": ["Panaji", "Margao"],
+            "latlng": [15.2993, 74.1240]
+        },
+        "Gujarat": {
+            "cities": ["Ahmedabad", "Surat", "Vadodara", "Rajkot"],
+            "latlng": [22.2587, 71.1924]
+        },
+        "Haryana": {
+            "cities": ["Gurgaon", "Faridabad", "Panipat"],
+            "latlng": [29.0588, 76.0856]
+        },
+        "Himachal Pradesh": {
+            "cities": ["Shimla", "Manali", "Dharamshala"],
+            "latlng": [31.1048, 77.1734]
+        },
+        "Jharkhand": {
+            "cities": ["Ranchi", "Jamshedpur", "Dhanbad"],
+            "latlng": [23.6102, 85.2799]
+        },
+        "Karnataka": {
+            "cities": ["Bengaluru", "Mysuru", "Mangaluru"],
+            "latlng": [15.3173, 75.7139]
+        },
+        "Kerala": {
+            "cities": ["Thiruvananthapuram", "Kochi", "Kozhikode"],
+            "latlng": [10.8505, 76.2711]
+        },
+        "Lakshadweep": {
+            "cities": ["Kavaratti"],
+            "latlng": [10.5667, 72.6333]
+        },
+        "Madhya Pradesh": {
+            "cities": ["Bhopal", "Indore", "Jabalpur"],
+            "latlng": [22.9734, 78.6569]
+        },
+        "Maharashtra": {
+            "cities": ["Mumbai", "Pune", "Nagpur", "Nashik"],
+            "latlng": [19.7515, 75.7139]
+        },
+        "Manipur": {
+            "cities": ["Imphal"],
+            "latlng": [24.6637, 93.9063]
+        },
+        "Meghalaya": {
+            "cities": ["Shillong"],
+            "latlng": [25.5788, 91.8933]
+        },
+        "Mizoram": {
+            "cities": ["Aizawl"],
+            "latlng": [23.1645, 92.9376]
+        },
+        "Nagaland": {
+            "cities": ["Kohima"],
+            "latlng": [26.1584, 94.5624]
+        },
+        "Odisha": {
+            "cities": ["Bhubaneswar", "Cuttack", "Rourkela"],
+            "latlng": [20.9517, 85.0985]
+        },
+        "Puducherry": {
+            "cities": ["Puducherry"],
+            "latlng": [11.9416, 79.8083]
+        },
+        "Punjab": {
+            "cities": ["Ludhiana", "Amritsar", "Jalandhar"],
+            "latlng": [31.1471, 75.3412]
+        },
+        "Rajasthan": {
+            "cities": ["Jaipur", "Jodhpur", "Udaipur"],
+            "latlng": [27.0238, 74.2179]
+        },
+        "Sikkim": {
+            "cities": ["Gangtok"],
+            "latlng": [27.5330, 88.5122]
+        },
+        "Tamil Nadu": {
+            "cities": ["Chennai", "Coimbatore", "Madurai"],
+            "latlng": [11.1271, 78.6569]
+        },
+        "Telangana": {
+            "cities": ["Hyderabad", "Warangal", "Nizamabad"],
+            "latlng": [18.1124, 79.0193]
+        },
+        "Tripura": {
+            "cities": ["Agartala"],
+            "latlng": [23.7466, 91.7454]
+        },
+        "Uttar Pradesh": {
+            "cities": ["Lucknow", "Kanpur", "Varanasi", "Agra"],
+            "latlng": [26.8467, 80.9462]
+        },
+        "Uttarakhand": {
+            "cities": ["Dehradun", "Haridwar", "Rishikesh"],
+            "latlng": [30.0668, 79.0193]
+        },
+        "West Bengal": {
+            "cities": ["Kolkata", "Howrah", "Asansol"],
+            "latlng": [22.9868, 87.8549]
+        }
+    };
+    
+    // Using a hosted GeoJSON file for Indian states
+    const INDIA_GEOJSON_URL = 'https://raw.githubusercontent.com/Subhash9325/GeoJson-Data-of-Indian-States/master/Indian_States';
+
+    // Initialize the map
+    const map = L.map('map').setView([23.5, 80], 5); // Centered on India
+    const contactsLayer = L.layerGroup().addTo(map);
+
+    // Add a tile layer from OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Load GeoJSON for Indian states
+    fetch(INDIA_GEOJSON_URL)
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: {
+                    color: '#007bff',
+                    weight: 1,
+                    fillOpacity: 0.1
+                }
+            }).addTo(map);
+        })
+        .catch(error => console.error('Error loading GeoJSON:', error));
+
+    const stateDropdown = document.getElementById('state');
+    const cityDropdown = document.getElementById('city');
+    const contactForm = document.getElementById('contact-form');
+    const contactsListContainer = document.querySelector('.contacts-list-container');
+    const contactsList = document.getElementById('contacts-list');
+    const searchInput = document.getElementById('search-input');
+    
+    // Populate the State dropdown
+    Object.keys(INDIA_DATA).forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateDropdown.appendChild(option);
+    });
+
+    // Dynamic City dropdown
+    stateDropdown.addEventListener('change', () => {
+        const selectedState = stateDropdown.value;
+        cityDropdown.innerHTML = '<option value="">Select City</option>'; // Clear and reset
+        if (selectedState) {
+            INDIA_DATA[selectedState].cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityDropdown.appendChild(option);
+            });
+        }
+    });
+
+    // LocalStorage key
+    const STORAGE_KEY = 'india-contacts';
+    let contacts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // Save contacts to localStorage
+    const saveContacts = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts));
+    };
+
+    // Render contacts on the map and in the list
+    const renderContacts = (filteredContacts = contacts) => {
+        contactsLayer.clearLayers();
+        contactsList.innerHTML = '';
+        if (filteredContacts.length > 0) {
+            contactsListContainer.style.display = 'block';
+        } else {
+            contactsListContainer.style.display = 'none';
+        }
+
+        filteredContacts.forEach(contact => {
+            // Add marker to map
+            const stateData = INDIA_DATA[contact.state];
+            if (stateData) {
+                const latlng = stateData.latlng;
+                const marker = L.marker(latlng).addTo(contactsLayer);
+                marker.bindPopup(`
+                    <b>${contact.name}</b><br>
+                    ${contact.institution}<br>
+                    ${contact.city}, ${contact.state}<br>
+                    ${contact.position}
+                    <button onclick="window.location.href='tel:${contact.contactNumber}'">Call</button>
+                    <button onclick="window.location.href='mailto:${contact.email}'">Email</button>
+                    <button class="placeholder-button">Connect (WhatsApp)</button>
+                `);
+            }
+
+            // Add card to list
+            const contactCard = document.createElement('li');
+            contactCard.className = 'contact-card';
+            contactCard.innerHTML = `
+                <h3>${contact.name}</h3>
+                <p><strong>Position:</strong> ${contact.position}</p>
+                <p><strong>Category:</strong> ${contact.category}</p>
+                <p><strong>Institution/Office:</strong> ${contact.institution}</p>
+                <p><strong>Location:</strong> ${contact.city}, ${contact.state}</p>
+            `;
+            contactsList.appendChild(contactCard);
+        });
+    };
+
+    // Handle form submission
+    contactForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newContact = {
+            id: Date.now(),
+            name: document.getElementById('name').value,
+            contactNumber: document.getElementById('contact-number').value,
+            email: document.getElementById('email').value,
+            institution: document.getElementById('institution').value,
+            position: document.getElementById('position').value,
+            category: document.getElementById('category').value,
+            state: document.getElementById('state').value,
+            city: document.getElementById('city').value,
+        };
+
+        contacts.push(newContact);
+        saveContacts();
+        renderContacts();
+        contactForm.reset();
+        cityDropdown.innerHTML = '<option value="">Select City</option>';
+    });
+
+    // Handle search input
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = contacts.filter(contact =>
+            contact.name.toLowerCase().includes(query) ||
+            contact.city.toLowerCase().includes(query) ||
+            contact.institution.toLowerCase().includes(query) ||
+            contact.state.toLowerCase().includes(query) ||
+            contact.position.toLowerCase().includes(query) ||
+            contact.category.toLowerCase().includes(query)
+        );
+        renderContacts(filtered);
+    });
+
+    // Initial render of existing contacts
+    renderContacts();
+</script>
+
+</body>
+</html>
